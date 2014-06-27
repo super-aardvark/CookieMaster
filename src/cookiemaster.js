@@ -670,6 +670,13 @@ CM.config = {
             ],
             current: 'off'
         },
+        syncReindeer: {
+            group: 'helpers',
+            type:  'checkbox',
+            label: 'Sync Reindeer with Golden Cookies:',
+            desc:  'Attempts to always click reindeer right after clicking a golden cookie.',
+            current: 'off'
+        },
         autoClick: {
             group:   'helpers',
             type:    'select',
@@ -3189,12 +3196,47 @@ CM.updateDisplayGCTimer = function() {
 CM.autoClickPopups = function() {
 
     var setting = this.config.settings.autoClickPopups.current;
+    var sync = this.config.settings.syncReindeer.current;
 
+	var eFz = Game.frenzy > 0 && Game.frenzyPower === 666;
+	var fz = Game.frenzy > 0 && Game.frenzyPower > 1 && !eFz;
+	var clot = Game.frenzy > 0 && Game.frenzyPower < 1;
+	
+	// Max and Min times are based on three 9's of certainty (0.1% chance it will fall outside this range)
+//	var reindeerMaxTime = Game.Has('Reindeer baking grounds') ? 134 : 259;
+//	var reindeerMinTime = Game.Has('Reindeer baking grounds') ? 100 : 198;
+//	var gcMaxTime = Game.Has('Golden goose egg') ? 137 : 143;
+//	var gcMinTime = Game.Has('Golden goose egg') ? 86 : 90;
+	
+	// Max and Min times are based on two 9's of certainty (1% chance it will fall outside this range)
+	var reindeerMaxTime = Game.Has('Reindeer baking grounds') ? 131 : 254;
+	var reindeerMinTime = Game.Has('Reindeer baking grounds') ? 105 : 206;
+	var gcMaxTime = Game.Has('Golden goose egg') ? 132 : 139;
+	var gcMinTime = Game.Has('Golden goose egg') ? 93 : 98;
+	
+	var eFzDuration = Game.Has('Get lucky') ? 12 : 6;
+	var reindeerDuration = Game.Has('Weighted sleighs') ? 8 : 4;
+	var reindeerLife = Game.seasonPopup.life / Game.fps;
+	var reindeerTime = Game.seasonPopup.time / Game.fps;
+	var gcLife = Game.goldenCookie.life / Game.fps;
+	var gcTime = Game.goldenCookie.time / Game.fps;
+	
     // Auto click Golden Cookie
     if(setting === 'gc' || setting === 'all') {
 
         if(Game.goldenCookie.life > 0) {
-            Game.goldenCookie.click();
+        	if (sync === 'off') {
+        		Game.goldenCookie.click();
+        	} else {
+        		// Click the cookie if: it's about to disappear; 
+        		// or reindeer is on screen; 
+        		// or reindeer will be available before end of Elder Frenzy 
+        		if (gcLife < 0.5
+        				|| reindeerLife > 0
+        				|| reindeerTime > (reindeerMaxTime - (eFzDuration - 1))) {
+            		Game.goldenCookie.click();
+        		}
+        	}
         }
 
     }
@@ -3203,7 +3245,19 @@ CM.autoClickPopups = function() {
     if(setting === 'sp' || setting === 'all') {
 
         if(Game.seasonPopup.life > 0) {
-            Game.seasonPopup.click();
+        	if (sync === 'off') {
+        		Game.seasonPopup.click();
+        	} else {
+        		// Click the reindeer if: it's about to disappear;
+        		// or Elder Frenzy is about to end;
+        		// or GC won't appear soon and GC timer has enough of a head start to stay in sync
+        		if (reindeerLife < 0.5
+        				|| (eFz && Game.frenzy < Game.fps)
+        				|| (reindeerDuration < gcMinTime - gcTime
+        						&& reindeerMinTime + reindeerDuration - 1 > gcMaxTime - gcTime)) {
+        			Game.seasonPopup.click();
+        		}
+        	}
         }
 
     }
