@@ -671,10 +671,10 @@ CM.config = {
             current: 'off'
         },
         syncReindeer: {
-            group: 'helpers',
+            group: 'exp',
             type:  'checkbox',
             label: 'Sync Reindeer with Golden Cookies:',
-            desc:  'Attempts to always click reindeer right after clicking a golden cookie.',
+            desc:  'Attempts to always click reindeer right after clicking a golden cookie. (Be sure to set "Auto-click Popups" to "All")',
             current: 'off'
         },
         autoClick: {
@@ -3214,6 +3214,9 @@ CM.autoClickPopups = function() {
 	var gcMaxTime = Game.Has('Golden goose egg') ? 132 : 139;
 	var gcMinTime = Game.Has('Golden goose egg') ? 93 : 98;
 	
+	var reindeerAvgTime = Game.Has('Reindeer baking grounds') ? 120 : 234;
+	var gcAvgTime = Game.Has('Golden goose egg') ? 116 : 121;
+	
 	var eFzDuration = Game.Has('Get lucky') ? 12 : 6;
 	var reindeerDuration = Game.Has('Weighted sleighs') ? 8 : 4;
 	var reindeerLife = Game.seasonPopup.life / Game.fps;
@@ -3228,13 +3231,21 @@ CM.autoClickPopups = function() {
         	if (sync === 'off') {
         		Game.goldenCookie.click();
         	} else {
-        		// Click the cookie if: it's about to disappear; 
-        		// or reindeer is on screen; 
-        		// or reindeer will be available before end of Elder Frenzy 
-        		if (gcLife < 0.5
-        				|| reindeerLife > 0
-        				|| reindeerTime > (reindeerMaxTime - (eFzDuration - 1))) {
-            		Game.goldenCookie.click();
+        		if (Game.goldenCookie.chain) {
+        			// Ignore cookie chains unless we're already out of sync
+        			if (reindeerLife === 0 
+        					&& (reindeerMinTime - reindeerTime) + reindeerMinTime > gcMaxTime) {
+        				Game.goldenCookie.click();
+        			}
+        		} else {
+	        		// Click the cookie if: it's about to disappear; 
+	        		// or reindeer is on screen; 
+	        		// or reindeer will be available before end of Elder Frenzy 
+	        		if (gcLife < 0.5
+	        				|| reindeerLife > 0
+	        				|| reindeerTime > (reindeerMaxTime - (eFzDuration - 1))) {
+	            		Game.goldenCookie.click();
+	        		}
         		}
         	}
         }
