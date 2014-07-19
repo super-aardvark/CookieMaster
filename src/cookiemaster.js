@@ -1648,9 +1648,9 @@ CM.formatTime = function(t, compressed) {
 
     // Compute each units separately
     var time    = Math.round(t),
-        days    = (time / 86400) % 999,
-        hours   = (time / 3600) % 24,
-        minutes = (time / 60) % 60,
+        days    = Math.floor(time / 86400) % 999,
+        hours   = Math.floor(time / 3600) % 24,
+        minutes = Math.floor(time / 60) % 60,
         seconds = time % 60,
         units = [' days, ', ' hours, ', ' minutes, ', ' seconds'],
         formatted;
